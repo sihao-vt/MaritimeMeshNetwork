@@ -39,6 +39,6 @@ New propagation model will add later.
 
 ### Calculate Communication Link Block Probability
 
-The wave height follows normal distribution. The mean of this normal distribution is zero, because wave is superposition of sine waves of different frequencies and amplitudes. On the other hand, the variance is related to wind speed (or Phillips Spectrum which we use to generate ocean wave on matlab, wind speed and Phillips Spectrum act the same role here), so it is also known.
+The wave height follows normal distribution. The mean of this normal distribution is zero, because wave is superposition of sine waves of different frequencies and amplitudes. The variance is related to wind speed (or Phillips Spectrum which we use to generate ocean wave on matlab, wind speed and Phillips Spectrum act the same role here), so it is also known.
 
 Then we can use law of sines and cosines to calculate the block probability. Annotation in file will show details.
