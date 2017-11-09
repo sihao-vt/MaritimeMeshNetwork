@@ -11,7 +11,7 @@ tar xjf ns-allinone-3.24.tar.bz2
 ```
 [ns3 Tutorial-Getting Started](https://www.nsnam.org/docs/release/3.24/tutorial/html/getting-started.html#downloading-ns3)
 
-Then, copy `ocean-3d-random-walk.h` and `ocean-3d-random-walk.cc` to ns3/src/mobility/model. Also replace ns3/src/mobility/wcsript with wscript, which is the registration file and will not affect other funcationalities.
+Then, copy `ocean-3d-random-walk.h`, `ocean-3d-random-walk.cc` and `data.txt`to ns3/src/mobility/model. `data.txt` is only a naive data file and only uses 64-64 mesh size. Also replace ns3/src/mobility/wcsript with wscript, which is the registration file and will not affect other funcationalities.
 
 Same for copying`ocean-propagation-model.h` and `ocean-propagation-model.cc` to ns3/src/propagation/model, and copying wscript to replace ns3/src/propagation/wsript.
 
