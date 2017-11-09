@@ -1,6 +1,6 @@
 # OceanWave
 
-##SetUp
+## SetUp
 First, you need to install ns3.
 ```
 cd
