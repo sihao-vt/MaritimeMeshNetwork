@@ -1,4 +1,4 @@
-# OceanWave
+# Ocean Mesh Network Simulation
 
 ## SetUp
 First, you need to install ns3.
@@ -9,13 +9,13 @@ cd workspace
 wget http://www.nsnam.org/release/ns-allinone-3.24.tar.bz2
 tar xjf ns-allinone-3.24.tar.bz2
 ```
-[ns3 Tutorial-Getting Started](https://www.nsnam.org/docs/release/3.24/tutorial/html/getting-started.html#downloading-ns3)
+[ns3 Tutorial-Getting Started](https://www.nsnam.org/docs/release/3.24/tutorial/html/getting-started.html#downloading-ns3) is the tutorial page of NS3.
 
-Then, copy `ocean-3d-random-walk.h`, `ocean-3d-random-walk.cc` and `data.txt`to ns3/src/mobility/model. `data.txt` is only a naive data file and only uses 64-64 mesh size. Also use wscript to replace ns3/src/mobility/wcsript, which is the registration file and will not affect other funcationalities.
+Then, copy `ocean-3d-random-walk.h` and `ocean-3d-random-walk.cc` to ns3/src/mobility/model/. Also use wscript to replace ns3/src/mobility/wcsript, which is the registration file and will not affect other funcationalities.
 
 Same for copying`ocean-propagation-model.h` and `ocean-propagation-model.cc` to ns3/src/propagation/model, and copying wscript to replace ns3/src/propagation/wsript.
 
-`ocean.cc` is the main function. In my preference, I will put this file in scratch/ . Then run
+`ocean.cc` is the main function. I perfer to put this file in ns3/scratch/ . Then run
 ```
 ./waf --run scratch/ocean
 ```
