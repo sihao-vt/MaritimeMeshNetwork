@@ -20,13 +20,13 @@ and GetPredictHeight().
 
 --Predict():                  predict wave height
 
---GetMessageVTime             get message valid time information. For HNA and MID message, we use original GetVTime() function.
+--GetMessageVTime:            get message valid time information. For HNA and MID message, we use original GetVTime() function.
                               For Hello and TC message, we find the valid time based on height information.
 
---#define OLSR_OCEAN_HOLD_TIME 0.5
+--#define OLSR_OCEAN_HOLD_TIME 0.5:
                               default hold time for hello and tc message if we predict the link is stable
                               
---#define RADIUS 35
+--#define RADIUS 35:
                               threshold of stable communication link
                               
 --line 405                    link  olsr model with mobility model
