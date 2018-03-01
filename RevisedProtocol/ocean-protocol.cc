@@ -186,11 +186,11 @@ OceanProtocol::GetTypeId (void)
                                     OLSR_WILL_ALWAYS, "always"))
 	.AddAttribute ("Interval", "Height record interval",
 	               DoubleValue(0.1),
-				   MakeDoubleAccessor (& OceanProtocol::m_delay),
+				   MakeDoubleAccessor (& OceanProtocol::m_sampleInterval),
 				   MakeDoubleChecker<double>())
     .AddAttribute ("PredictDelay", "Predict delay ",
 	               DoubleValue(0.5),
-				   MakeDoubleAccessor (& OceanProtocol::m_predictDelay),
+				   MakeDoubleAccessor (& OceanProtocol::m_predictInterval),
 				   MakeDoubleChecker<double>())
 
 	.AddTraceSource ("Rx", "Receive OLSR packet.",
@@ -3200,12 +3200,12 @@ void
 OceanProtocol::Record()
 {
   double height= m_mobility ->GetPosition().z;
-  recordHeight.push_back(height);
-  if(recordHeight.size()>10){
-    recordHeight.pop_front();
+  m_recordHeight.push_back(height);
+  if(m_recordHeight.size()>10){
+    m_recordHeight.pop_front();
     Predict();
   }
-  Simulator::Schedule(Seconds(m_delay), &OceanProtocol::Record, this);
+  Simulator::Schedule(Seconds(m_sampleInterval), &OceanProtocol::Record, this);
 }
 
 void 
@@ -3213,7 +3213,7 @@ OceanProtocol::Predict(void)
 {
   uint8_t degree = 3;
   m_predictHeight=PolyFit(degree);
-  //std::list<double> a=recordHeight;
+  //std::list<double> a=m_recordHeight;
   //for(int i=0;i<10;i++){std::cout<<a.front()<<" ";a.pop_front();}
   //std::cout<<m_predictHeight<<std::endl;
 }
@@ -3221,8 +3221,8 @@ OceanProtocol::Predict(void)
 double
 OceanProtocol::PolyFit(uint8_t degree)
 {
-  uint8_t len = recordHeight.size();
-  std::list<double> copy = recordHeight;
+  uint8_t len = m_recordHeight.size();
+  std::list<double> copy = m_recordHeight;
   std::vector<double> x(len, 0);
   std::vector<double> y(len, 0);
   for(uint8_t i=0;i<len;i++)
@@ -3287,7 +3287,7 @@ OceanProtocol::PolyFit(uint8_t degree)
 	}
 
 	double result=0;
-	uint8_t step=m_predictDelay/m_delay;
+	uint8_t step=m_predictInterval/m_sampleInterval;
 	for(uint8_t i=0;i<a.size();i++)
 	  result+=a[i]*pow(step+len-1, i);
 

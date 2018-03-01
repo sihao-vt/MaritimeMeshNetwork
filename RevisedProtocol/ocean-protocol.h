@@ -210,12 +210,12 @@ private:
 
   //////////////////////////////////////////////////////////////////////////////////
   Ptr<MobilityModel> m_mobility;
-  std::list<double> recordHeight;
+  std::list<double> m_recordHeight;
   double m_predictHeight;
   void Record();
   void Predict();
-  double m_delay;
-  double m_predictDelay;
+  double m_sampleInterval;
+  double m_predictInterval;
   double PolyFit(uint8_t degree);
   Time GetMessageVTime(const OceanMessageHeader& msg);
   //////////////////////////////////////////////////////////////////////////////////
