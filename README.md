@@ -40,9 +40,9 @@ We use a two-ray model, which is a common and widely-used propagation model.
 Also, this propagation model can check if the ocean wave is blocked by ocean wave. If so, we assume that the communication 
 link is corrupted.
 
-### Revised OLSR routing protocol
+### Link-state-aware routing protocol
 
-The message contains the information of how long this node is available among its neighbor nodes(Valid time). The default 
+This protocol is based on OLSR protocol. The message contains the information of how long this node is available among its neighbor nodes(Valid time). The default 
 valid time is 6 seconds and 15 seconds for hello message and tc(topology control) message, respectively.
 
 However, the communciation link can be block by ocean wave anytime. So we need to predict how long this link is available. To 
