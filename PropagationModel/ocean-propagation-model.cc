@@ -104,7 +104,6 @@ void OceanPropagationModel::SetFreq(double freq)
   m_freq=freq;
   static const double c = 299792458.0;
   m_lambda=c/m_freq/1e6;
-  //std::cout<<"lambda"<<m_lambda<<std::endl;
   InitPath();
 }
 double OceanPropagationModel::GetFreq() const{return m_freq;}
@@ -156,11 +155,10 @@ double OceanPropagationModel::DoCalcRxPower(double txPowerDbm,
 
     if(checkBlock(distance,txHeight,rxHeight,Simulator::Now(),a->GetPosition().x,a->GetPosition().y,refangle))
     {
-      //std::cout<<111<<std::endl;
-      return -1000;
+      return -1000; 
     }
     else
-	{
+    {
 	  double d0=1;
       double EIRP_w=std::pow(10,txPowerDbm/10)/1000;
       double E0_Square=30*EIRP_w/(d0*d0);
@@ -171,9 +169,9 @@ double OceanPropagationModel::DoCalcRxPower(double txPowerDbm,
                        2*E0_Square*(d0/d1)*(d0/d2)*std::cos(delta_theta);
       double Pr_w=ETOT_Square*m_lambda*m_lambda/480/M_PI/M_PI;
       double Pr_dbm=10*std::log10(Pr_w*1000);
-      //std::cout <<222<<std::endl;
+      //std::cout<<Pr_dbm<<std::endl;
       return Pr_dbm;
-	}
+    }
   }
 }
 
@@ -197,7 +195,7 @@ bool OceanPropagationModel::checkBlock(double distance, double txHeight, double 
   double grid_size = (double)m_patchSize/(m_meshSize-1);
   xlength=fmod(xlength,m_patchSize);
   ylength=fmod(ylength,m_patchSize);
-    //std::cout<<ylength<<std::endl;    
+  
   uint16_t num=distance/grid_size;
 
   for(uint16_t i=0;i<num;i++)
@@ -227,13 +225,12 @@ bool OceanPropagationModel::checkBlock(double distance, double txHeight, double 
 	P2=(v21*(m_timeStep*(T+1)-time)+v22*(time-m_timeStep*T))/m_timeStep;
 	P3=(v31*(m_timeStep*(T+1)-time)+v32*(time-m_timeStep*T))/m_timeStep;
 	P4=(v41*(m_timeStep*(T+1)-time)+v42*(time-m_timeStep*T))/m_timeStep;
-    //std::cout<<P1<<" "<<P2<<" "<<P3<<" "<<P4<<" "<<std::endl;
-    P_res= (P1*((XAxis+1)*grid_size-xlength)*((YAxis+1)*grid_size-ylength)+
+ 
+   P_res= (P1*((XAxis+1)*grid_size-xlength)*((YAxis+1)*grid_size-ylength)+
 	   P3*((XAxis+1)*grid_size-xlength)*(ylength-YAxis*grid_size)+
 	P2*(xlength-XAxis*grid_size)*((YAxis+1)*grid_size-ylength)+
 	P4*(xlength-XAxis*grid_size)*((ylength-YAxis*grid_size)))
         /(grid_size*grid_size);
-  //std::cout<<P_res<<std::endl;
   
     if(P_res>h1){ 
         return true;
