@@ -42,6 +42,8 @@
 #include "ns3/mobility-model.h"
 #include "ns3/node-container.h"
 #include "ns3/double.h"
+#include "ns3/ocean-3d-random-walk.h"
+#include "ns3/olsr-routing-protocol.h"
 
 #include <list>
 #include <vector>
@@ -60,7 +62,7 @@ namespace olsr {
 
 /// \ingroup olsr
 /// An %OLSR's routing table entry.
-struct RoutingTableEntry
+/*struct RoutingTableEntry
 {
   Ipv4Address destAddr; //!< Address of the destination node.
   Ipv4Address nextAddr; //!< Address of the next hop.
@@ -72,7 +74,7 @@ struct RoutingTableEntry
     interface (0), distance (0)
   {
   }
-};
+};*/
 
 class OceanProtocol;
 
@@ -209,14 +211,15 @@ private:
   Ptr<Ipv4StaticRouting> m_hnaRoutingTable; //!< Routing table for HNA routes
 
   //////////////////////////////////////////////////////////////////////////////////
-  Ptr<MobilityModel> m_mobility;
-  std::list<double> m_recordHeight;
+  Ptr<Ocean3dRandomWalk> m_mobility;
+  //std::list<double> m_recordHeight;
+  double m_currentHeight;
   double m_predictHeight;
   void Record();
-  void Predict();
+  //void Predict();
   double m_sampleInterval;
   double m_predictInterval;
-  double PolyFit(uint8_t degree);
+  //double PolyFit(uint8_t degree);
   Time GetMessageVTime(const OceanMessageHeader& msg);
   //////////////////////////////////////////////////////////////////////////////////
 

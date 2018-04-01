@@ -85,7 +85,7 @@
 /// HNA holding time.
 #define OLSR_HNA_HOLD_TIME      Time (3 * m_hnaInterval)
 
-#define OLSR_OCEAN_HOLD_TIME    Time ( 0.5 )
+#define OLSR_OCEAN_HOLD_TIME    Seconds ( 1 )
 #define RADIUS    35
 /********** Link types **********/
 
@@ -404,8 +404,8 @@ void OceanProtocol::DoInitialize ()
       NS_LOG_DEBUG ("OLSR on node " << m_mainAddress << " started");
     }
 
-    m_mobility = this -> GetObject<Node>() ->GetObject<MobilityModel>();
-	Simulator::Schedule(Seconds(0.0), &OceanProtocol::Record, this);
+    m_mobility = this -> GetObject<Node>() ->GetObject<Ocean3dRandomWalk>();
+    Simulator::Schedule(Seconds(0.0), &OceanProtocol::Record, this);
 }
 
 void OceanProtocol::SetMainInterface (uint32_t interface)
@@ -2001,8 +2001,9 @@ OceanProtocol::LinkSensing (const olsr::OceanMessageHeader &msg,
   NS_LOG_DEBUG ("@" << now.GetSeconds () << ": Olsr node " << m_mainAddress
                     << ": LinkSensing(receiverIface=" << receiverIface
                     << ", senderIface=" << senderIface << ") BEGIN");
+  if(GetMessageVTime(msg)==Seconds(0)) return;
 
-  NS_ASSERT (GetMessageVTime(msg) > Seconds (0));
+  //NS_ASSERT (GetMessageVTime(msg) > Seconds (0));
   LinkTuple *link_tuple = m_state.FindLinkTuple (senderIface);
   if (link_tuple == NULL)
     {
@@ -3199,16 +3200,20 @@ OceanProtocol::GetRoutingTableAssociation () const
 void
 OceanProtocol::Record()
 {
-  double height= m_mobility ->GetPosition().z;
-  m_recordHeight.push_back(height);
-  if(m_recordHeight.size()>10){
-    m_recordHeight.pop_front();
-    Predict();
-  }
+  m_currentHeight = m_mobility ->GetPosition().z;
+  //std::cout<<m_currentHeight<<std::endl;
+  //std::cout<<height<<std::endl;
+  //m_recordHeight.push_back(height);
+  //if(m_recordHeight.size()>10){
+  //  m_recordHeight.pop_front();
+  //  Predict();
+  //}
+  m_predictHeight = m_mobility->GetPredictedHeight(OLSR_OCEAN_HOLD_TIME);
+  //std::cout<<m_currentHeight<<" "<<m_predictHeight<<std::endl;
   Simulator::Schedule(Seconds(m_sampleInterval), &OceanProtocol::Record, this);
 }
 
-void 
+/*void 
 OceanProtocol::Predict(void) 
 {
   uint8_t degree = 3;
@@ -3292,23 +3297,27 @@ OceanProtocol::PolyFit(uint8_t degree)
 	  result+=a[i]*pow(step+len-1, i);
 
 	return result;
-}
+}*/
 
 Time 
 OceanProtocol::GetMessageVTime(const OceanMessageHeader& msg)
 {
   if(msg.GetMessageType()==olsr::MessageHeader::MID_MESSAGE || msg.GetMessageType() == olsr::MessageHeader::HNA_MESSAGE)
   {
+    std::cout<<msg.GetVTime()<<1111111<<std::endl;
     return msg.GetVTime();
   }
   else
   {
     double rxHeight=m_predictHeight;
-	double txHeight=msg.GetPredictHeight();
+    double txHeight=msg.GetPredictHeight();
 	if ((5-rxHeight)*(5-rxHeight)+(5-txHeight)*(5-txHeight)>RADIUS)
-	  return Time(0);
-	else 
-	  return Time(OLSR_OCEAN_HOLD_TIME);
+	  return Seconds(0);
+	else
+        {
+          std::cout<<Seconds(OLSR_OCEAN_HOLD_TIME)<<std::endl;
+	  return Seconds(OLSR_OCEAN_HOLD_TIME);
+        }
   }
 }
 
