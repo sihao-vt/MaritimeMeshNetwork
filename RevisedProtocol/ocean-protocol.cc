@@ -86,7 +86,7 @@
 #define OLSR_HNA_HOLD_TIME      Time (3 * m_hnaInterval)
 
 #define OLSR_OCEAN_HOLD_TIME    Seconds ( 1 )
-#define RADIUS    35
+#define RADIUS   100
 /********** Link types **********/
 
 /// Unspecified link type.
@@ -161,11 +161,11 @@ OceanProtocol::GetTypeId (void)
     .SetGroupName ("Olsr")
     .AddConstructor<OceanProtocol> ()
     .AddAttribute ("HelloInterval", "HELLO messages emission interval.",
-                   TimeValue (Seconds (0.5)),
+                   TimeValue (Seconds (1)),
                    MakeTimeAccessor (&OceanProtocol::m_helloInterval),
                    MakeTimeChecker ())
     .AddAttribute ("TcInterval", "TC messages emission interval.",
-                   TimeValue (Seconds (0.5)),
+                   TimeValue (Seconds (1)),
                    MakeTimeAccessor (&OceanProtocol::m_tcInterval),
                    MakeTimeChecker ())
     .AddAttribute ("MidInterval", "MID messages emission interval.  Normally it is equal to TcInterval.",
@@ -189,7 +189,7 @@ OceanProtocol::GetTypeId (void)
 				   MakeDoubleAccessor (& OceanProtocol::m_sampleInterval),
 				   MakeDoubleChecker<double>())
     .AddAttribute ("PredictDelay", "Predict delay ",
-	               DoubleValue(0.5),
+	               DoubleValue(1),
 				   MakeDoubleAccessor (& OceanProtocol::m_predictInterval),
 				   MakeDoubleChecker<double>())
 
@@ -1278,7 +1278,6 @@ OceanProtocol::RoutingTableComputation ()
 
         }
     }
-
   NS_LOG_DEBUG ("Node " << m_mainAddress << ": RoutingTableComputation end.");
   m_routingTableChanged (GetSize ());
 }
@@ -1710,6 +1709,7 @@ OceanProtocol::SendHello ()
   msg.SetTimeToLive (1);
   msg.SetHopCount (0);
   msg.SetMessageSequenceNumber (GetMessageSequenceNumber ());
+	msg.SetPredictHeight(m_predictHeight);
   olsr::OceanMessageHeader::Hello &hello = msg.GetHello ();
 
   hello.SetHTime (m_helloInterval);
@@ -1817,6 +1817,7 @@ OceanProtocol::SendTc ()
   msg.SetTimeToLive (255);
   msg.SetHopCount (0);
   msg.SetMessageSequenceNumber (GetMessageSequenceNumber ());
+	msg.SetPredictHeight(m_predictHeight);
 
   olsr::OceanMessageHeader::Tc &tc = msg.GetTc ();
   tc.ansn = m_ansn;
@@ -3201,121 +3202,27 @@ void
 OceanProtocol::Record()
 {
   m_currentHeight = m_mobility ->GetPosition().z;
-  //std::cout<<m_currentHeight<<std::endl;
-  //std::cout<<height<<std::endl;
-  //m_recordHeight.push_back(height);
-  //if(m_recordHeight.size()>10){
-  //  m_recordHeight.pop_front();
-  //  Predict();
-  //}
   m_predictHeight = m_mobility->GetPredictedHeight(OLSR_OCEAN_HOLD_TIME);
-  //std::cout<<m_currentHeight<<" "<<m_predictHeight<<std::endl;
+	//std::cout<<m_currentHeight<<" "<<m_predictHeight<<std::endl;
   Simulator::Schedule(Seconds(m_sampleInterval), &OceanProtocol::Record, this);
 }
-
-/*void 
-OceanProtocol::Predict(void) 
-{
-  uint8_t degree = 3;
-  m_predictHeight=PolyFit(degree);
-  //std::list<double> a=m_recordHeight;
-  //for(int i=0;i<10;i++){std::cout<<a.front()<<" ";a.pop_front();}
-  //std::cout<<m_predictHeight<<std::endl;
-}
-
-double
-OceanProtocol::PolyFit(uint8_t degree)
-{
-  uint8_t len = m_recordHeight.size();
-  std::list<double> copy = m_recordHeight;
-  std::vector<double> x(len, 0);
-  std::vector<double> y(len, 0);
-  for(uint8_t i=0;i<len;i++)
-    x[i]=i;
-  for(uint8_t j=0;j<len;j++)
-  {
-    y[j]=copy.front();
-	copy.pop_front();
-  }
-  std::vector<double> X (2*degree+1,0);
-  for(uint8_t i=0;i<2*degree+1;i++)
-  {
-    X[i]=0;
-	for(uint8_t j=0;j<len;j++)
-	  X[i]=X[i]+pow(x[j],i);
-  }
-
-  std::vector<std::vector<double>> B (degree+1, std::vector<double>(degree+2, 0));
-  std::vector<double> a (degree+1, 0);
-  for(uint8_t i = 0;i<=degree; i++)
-    for(uint8_t j = 0; j<=degree; j++)
-	  B[i][j]= X[i+j];
-
-  std::vector<double> Y(degree+1, 0);
-  for(uint8_t i=0;i<degree+1;i++)
-  {
-    Y[i]=0;
-	for(uint8_t j=0;j<len;j++)
-	  Y[i]=Y[i]+pow(x[j],i)*y[j];
-  }
-
-  for(uint8_t i=0;i<=degree;i++)
-    B[i][degree+1]=Y[i];
-
-  degree= degree+1;
-
-  for(uint8_t i=0;i<degree; i++)
-    for(uint8_t k=i+1;k<degree;k++)
-	  if(B[i][i]<B[k][i])
-	    for(uint8_t j=0;j<=degree;j++)
-		{
-		  double temp = B[i][j];
-		  B[i][j]=B[k][j];
-		  B[k][j]=temp;
-		}
-  
-  for(uint8_t i=0;i<degree-1;i++)
-    for(uint8_t k=i+1;k<degree;k++)
-	{
-	  double t=B[k][i]/B[i][i];
-	  for(uint8_t j=0;j<=degree;j++)
-	    B[k][j]=B[k][j]-t*B[i][j];
-	}
-
-	for(int8_t i=degree-1; i>=0; i--)
-	{
-	  a[i]=B[i][degree];
-	  for(uint8_t j=0;j<degree; j++)
-	    if(j!=i)
-		  a[i]= a[i]-B[i][j]*a[j];
-	  a[i]=a[i]/B[i][i];
-	}
-
-	double result=0;
-	uint8_t step=m_predictInterval/m_sampleInterval;
-	for(uint8_t i=0;i<a.size();i++)
-	  result+=a[i]*pow(step+len-1, i);
-
-	return result;
-}*/
 
 Time 
 OceanProtocol::GetMessageVTime(const OceanMessageHeader& msg)
 {
   if(msg.GetMessageType()==olsr::MessageHeader::MID_MESSAGE || msg.GetMessageType() == olsr::MessageHeader::HNA_MESSAGE)
   {
-    std::cout<<msg.GetVTime()<<1111111<<std::endl;
     return msg.GetVTime();
   }
   else
   {
     double rxHeight=m_predictHeight;
     double txHeight=msg.GetPredictHeight();
+		//std::cout<<rxHeight<<std::endl;
 	if ((5-rxHeight)*(5-rxHeight)+(5-txHeight)*(5-txHeight)>RADIUS)
 	  return Seconds(0);
 	else
         {
-          std::cout<<Seconds(OLSR_OCEAN_HOLD_TIME)<<std::endl;
 	  return Seconds(OLSR_OCEAN_HOLD_TIME);
         }
   }
