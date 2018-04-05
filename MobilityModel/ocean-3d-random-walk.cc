@@ -165,10 +165,9 @@ Ocean3dRandomWalk::GetPredictedHeight(Time t) const
 	double time=simulation_time.GetSeconds();
 	double predict_time=time+t.GetSeconds();
 	double result;
-//	std::cout<<time<< " "<<predict_time<<std::endl; 
 	uint16_t T=predict_time/m_timestep;
 	
-	result =(m_path[T]*((T+1)*m_timestep-time)+m_path[T+1]*(time - T * m_timestep))/m_timestep;
+	result =(m_path[T]*((T+1)*m_timestep-predict_time)+m_path[T+1]*(predict_time - T * m_timestep))/m_timestep;
 
 	return result;
 }
