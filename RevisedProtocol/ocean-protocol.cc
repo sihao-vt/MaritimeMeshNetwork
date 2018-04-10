@@ -86,7 +86,7 @@
 #define OLSR_HNA_HOLD_TIME      Time (3 * m_hnaInterval)
 
 #define OLSR_OCEAN_HOLD_TIME    Seconds ( 1 )
-#define RADIUS   100
+
 /********** Link types **********/
 
 /// Unspecified link type.
@@ -3218,8 +3218,9 @@ OceanProtocol::GetMessageVTime(const OceanMessageHeader& msg)
   {
     double rxHeight=m_predictHeight;
     double txHeight=msg.GetPredictHeight();
-		//std::cout<<rxHeight<<std::endl;
-	if ((5-rxHeight)*(5-rxHeight)+(5-txHeight)*(5-txHeight)>RADIUS)
+	//if ((5-rxHeight)*(5-rxHeight)+(5-txHeight)*(5-txHeight)>46.24) //1.0
+	if((4-rxHeight)*(4-rxHeight)+(4-txHeight)*(4-txHeight)>39.00)  //0.9
+	//if((4-rxHeight)*(4-rxHeight)+(4-txHeight)*(4-txHeight)>42.50)  //0.7
 	  return Seconds(0);
 	else
         {
