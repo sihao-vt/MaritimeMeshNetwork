@@ -12,7 +12,7 @@ rng(13);         % setting seed for random numbers
 A = 1e-7;        % parameter
 g = 9.81;        % gravitational constant
 % practical significant wave height
-swaveheight = windSpeed ^ 2 / g * 0.209 ; 
+swaveheight = windSpeed ^ 2 / g * 0.220 ; 
 % In order to satisfy conjugate symmetric property which inverse fft will be real 
 % meshSize should be an odd number. At last we will padding zeros and
 % change meshSize back
