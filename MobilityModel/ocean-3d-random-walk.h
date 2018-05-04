@@ -14,6 +14,7 @@ public:
   Ocean3dRandomWalk();
   virtual ~Ocean3dRandomWalk (); 
   double GetPredictedHeight(Time t) const;
+  double GetHeight(void);
 private:
   virtual void DoDispose (void);
   virtual void DoInitialize (void);
@@ -27,7 +28,6 @@ private:
   std::string m_filename;
   std::vector<double> m_path;
 
-  void GetHeight(void);
   void InitPath(void);
 
   Vector m_position;

@@ -7,6 +7,7 @@
 #include "ns3/log.h"
 #include <cmath>
 #include "ns3/uinteger.h"
+#include "ns3/node.h"
 
 namespace ns3 {
 
@@ -74,7 +75,7 @@ Ocean3dRandomWalk::DoSetPosition (const Vector &position)
   NotifyCourseChange();
 }
 
-void
+double
 Ocean3dRandomWalk::GetHeight(void)
 {
     Time simulation_time = Simulator::Now();
@@ -85,69 +86,30 @@ Ocean3dRandomWalk::GetHeight(void)
     result =(m_path[T]*((T+1)*m_timestep-time)+m_path[T+1]*(time - T * m_timestep))/m_timestep;
 
     m_position.z=result;
-		//std::cout<<m_position.z<<std::endl;
-    
-    Time delay = Seconds(m_timestep);
-    Simulator::Schedule(delay, &Ocean3dRandomWalk::GetHeight, this);
 
     NotifyCourseChange();
+
+		return result;
 }
 
 void
 Ocean3dRandomWalk::InitPath(void)
 {
-    m_path.resize(m_steps);
-
-    double xlength = m_position.x;
-    double ylength = m_position.y;
-
-    double xaxis=fmod(xlength, m_patchsize);
-    double yaxis=fmod(ylength, m_patchsize);
-
 	std::ifstream infile;
-	int16_t nop=5;
-
-	infile.open(m_filename,std::ifstream::in);
-
-	double interval = (double) m_patchsize/(m_meshsize-1);
-	uint16_t XAxis = xaxis / interval;
-	uint16_t YAxis = yaxis / interval;
-        //std::cout<<XAxis<<" "<<YAxis<<std::endl;
-        uint32_t p1, p2, p3, p4;
-	
-	double tmp;
-        for(uint16_t i=0;i<nop; i++)
+	m_path.resize(m_steps);
+	uint32_t index=this->GetObject<Node>()->GetId();
+	uint16_t nop=5;
+	infile.open(m_filename, std::ifstream::in);
+	double temp;
+	for(uint16_t i=0;i<nop;i++)
+		infile>>temp;
+	uint32_t pass=index*m_steps;
+	for(uint32_t i=0;i<pass;i++)
+		infile>>temp;
+	for(uint32_t i=0;i<m_steps;i++)
 	{
-            infile>>tmp;
+		infile>>m_path[i];
 	}
-
-	p1=YAxis*m_meshsize+XAxis;
-	p2=YAxis*m_meshsize+XAxis+1;
-	p3=(YAxis+1)*m_meshsize+XAxis;
-	p4=(YAxis+1)*m_meshsize+XAxis+1;
-        //std::cout<<p1<<p2<<p3<<p4<<std::endl;
-
-	double h1, h2, h3, h4;
-	for(uint16_t i=0;i<m_steps;i++)
-	{
-	  for(uint32_t j=0; j<m_meshsize*m_meshsize; j++)
-	  {
-	    if(j==p1-1) infile>>h1;
-	    else if(j==p2-1) infile>>h2;
-	    else if(j==p3-1) infile>>h3;
-	    else if(j==p4-1) infile>>h4;
-	    else infile>>tmp;
-	  }
-          double height=
-	          (h1*((XAxis+1)*interval-xaxis)*((YAxis+1)*interval-yaxis)+
-	          h3*((XAxis+1)*interval-xaxis)*(yaxis-YAxis*interval)+
-		  h2*(xaxis-XAxis*interval)*((YAxis+1)*interval-yaxis)+
-		  h4*(xaxis-XAxis*interval)*((yaxis-YAxis*interval)))
-		  /(interval*interval);
-	 // std::cout<<"  "<<height<<std::endl;
-          m_path[i] = height;
-	}
-
 	infile.close();
 }
 
