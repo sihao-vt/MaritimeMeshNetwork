@@ -3201,7 +3201,7 @@ OceanProtocol::GetRoutingTableAssociation () const
 void
 OceanProtocol::Record()
 {
-  m_currentHeight = m_mobility ->GetPosition().z;
+  m_currentHeight = m_mobility ->GetHeight();
   m_predictHeight = m_mobility->GetPredictedHeight(OLSR_OCEAN_HOLD_TIME);
 	//std::cout<<m_currentHeight<<" "<<m_predictHeight<<std::endl;
   Simulator::Schedule(Seconds(m_sampleInterval), &OceanProtocol::Record, this);
@@ -3219,8 +3219,8 @@ OceanProtocol::GetMessageVTime(const OceanMessageHeader& msg)
     double rxHeight=m_predictHeight;
     double txHeight=msg.GetPredictHeight();
 	//if ((5-rxHeight)*(5-rxHeight)+(5-txHeight)*(5-txHeight)>46.24) //1.0
-	if((4-rxHeight)*(4-rxHeight)+(4-txHeight)*(4-txHeight)>39.00)  //0.9
-	//if((4-rxHeight)*(4-rxHeight)+(4-txHeight)*(4-txHeight)>42.50)  //0.7
+	//if((4-rxHeight)*(4-rxHeight)+(4-txHeight)*(4-txHeight)>39.00)  //0.9
+	if((4-rxHeight)*(4-rxHeight)+(4-txHeight)*(4-txHeight)>42.50)  //0.7
 	  return Seconds(0);
 	else
         {
