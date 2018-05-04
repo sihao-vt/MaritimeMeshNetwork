@@ -9,6 +9,7 @@
 #include"ns3/pointer.h"
 #include<cmath>
 #include"ns3/uinteger.h"
+#include"ns3/ocean-3d-random-walk.h"
 
 namespace ns3
 {
@@ -126,52 +127,49 @@ double OceanPropagationModel::DoCalcRxPower(double txPowerDbm,
                                             Ptr<MobilityModel> a,
 					    Ptr<MobilityModel> b) const
 {
-  //This is a two-ray model
   double distance=a->GetDistanceFrom(b);
   double antennaHeight=5.0;
-  double txHeight=a->GetPosition().z+antennaHeight;
-  double rxHeight=a->GetPosition().z+antennaHeight;
-  if(distance<100)
+	Ptr<Ocean3dRandomWalk> c=DynamicCast<Ocean3dRandomWalk>(a);
+	Ptr<Ocean3dRandomWalk> d=DynamicCast<Ocean3dRandomWalk>(b);
+  double txHeight=c->GetHeight()+antennaHeight;
+  double rxHeight=d->GetHeight()+antennaHeight;
+  double refangle = 0.0;
+  double xref = b->GetPosition().x - a->GetPosition().x; 
+  double yref = b->GetPosition().y - a->GetPosition().y; 
+  if(xref == 0.0) {
+    if(yref > 0) {refangle = M_PI/2;}
+    else if(yref < 0){refangle = -M_PI/2;}
+    else {NS_FATAL_ERROR("Two nodes are overlapped");}
+  }
+  else {
+    refangle = std::atan(yref/xref);
+    if((refangle >= 0.0) & (xref < 0) & (yref < 0)) refangle = refangle + M_PI;
+    if((refangle <  0.0) & (xref < 0))              refangle = refangle + M_PI;
+  }
+
+  if(distance>14000 || checkBlock(distance,txHeight,rxHeight,Simulator::Now(),a->GetPosition().x,a->GetPosition().y,refangle))
   {
-    double pathLoss=4*M_PI*std::sqrt(distance*distance+(rxHeight-txHeight)*(rxHeight-txHeight))/m_lambda;
-	return txPowerDbm-20*std::log10(pathLoss);
+  return -1000; 
   }
   else
   {
-    double refangle = 0.0;
-    double xref = b->GetPosition().x - a->GetPosition().x; 
-    double yref = b->GetPosition().y - a->GetPosition().y; 
-    //std::cout<<xref<<" "<<yref<<std::endl;
-    if(xref == 0.0) {
-       if(yref > 0) {refangle = M_PI/2;}
-       else if(yref < 0){refangle = -M_PI/2;}
-       else {NS_FATAL_ERROR("Two nodes are overlapped");}
-    }
-    else {
-       refangle = std::atan(yref/xref);
-       if((refangle >= 0.0) & (xref < 0) & (yref < 0)) refangle = refangle + M_PI;
-       if((refangle <  0.0) & (xref < 0))              refangle = refangle + M_PI;
-    }
-
-    if(checkBlock(distance,txHeight,rxHeight,Simulator::Now(),a->GetPosition().x,a->GetPosition().y,refangle))
-    {
-      return -1000; 
-    }
-    else
-    {
-	  double d0=1;
-      double EIRP_w=std::pow(10,txPowerDbm/10)/1000;
-      double E0_Square=30*EIRP_w/(d0*d0);
-      double d1=sqrt((txHeight-rxHeight)*(txHeight-rxHeight)+distance*distance);
-      double d2=sqrt((txHeight+rxHeight)*(txHeight+rxHeight)+distance*distance);
-      double delta_theta=2*M_PI*(d2-d1)/m_lambda;
-      double ETOT_Square=E0_Square*(std::pow(d0/d1,2))+E0_Square*(std::pow(d0/d2,2))-
-                       2*E0_Square*(d0/d1)*(d0/d2)*std::cos(delta_theta);
-      double Pr_w=ETOT_Square*m_lambda*m_lambda/480/M_PI/M_PI;
-      double Pr_dbm=10*std::log10(Pr_w*1000);
-      //std::cout<<Pr_dbm<<std::endl;
-      return Pr_dbm;
-    }
+	  /*double d0=1;
+    double EIRP_w=std::pow(10,txPowerDbm/10)/1000;
+    double E0_Square=30*EIRP_w/(d0*d0);
+    double d1=sqrt((txHeight-rxHeight)*(txHeight-rxHeight)+distance*distance);
+    double d2=sqrt((txHeight+rxHeight)*(txHeight+rxHeight)+distance*distance);
+    double delta_theta=2*M_PI*(d2-d1)/m_lambda;
+    double ETOT_Square=E0_Square*(std::pow(d0/d1,2))+E0_Square*(std::pow(d0/d2,2))
+			-2*E0_Square*(d0/d1)*(d0/d2)*std::cos(delta_theta);
+    double Pr_w=ETOT_Square*m_lambda*m_lambda/480/M_PI/M_PI;
+    double Pr_dbm=10*std::log10(Pr_w*1000);
+		
+		return Pr_dbm;*/
+		double numerator = m_lambda * m_lambda;
+		double denominator = 16*M_PI*M_PI*distance*distance;
+    double lossDb=-10*log10(numerator/denominator);
+		double rssi=txPowerDbm-lossDb;
+    return rssi;
   }
 }
 
@@ -183,8 +181,6 @@ bool OceanPropagationModel::checkBlock(double distance, double txHeight, double 
 	double time=simulation_time.GetSeconds();
 	uint16_t T=time/m_timeStep;
 
-  if(txHeight<=0 || rxHeight<=0) return true;//if any antenna is lower than 0, we assume the link is corrupted.
-  
   const double radius=6371000;//earth radius
   double theta=distance/radius;
   
@@ -201,7 +197,7 @@ bool OceanPropagationModel::checkBlock(double distance, double txHeight, double 
   for(uint16_t i=0;i<num;i++)
   {
     double thetad=(i+1)*grid_size/radius;
-	double h1=(radius+txHeight)*sin(phi1)/std::sin(M_PI-phi1-thetad)-radius;
+	  double h1=(radius+txHeight)*sin(phi1)/std::sin(M_PI-phi1-thetad)-radius;
     
     xlength=xlength+grid_size*(std::cos(refangle));
     ylength=ylength+grid_size*(std::sin(refangle));
@@ -210,7 +206,6 @@ bool OceanPropagationModel::checkBlock(double distance, double txHeight, double 
     
     int16_t XAxis = xlength/grid_size;
     int16_t YAxis = ylength/grid_size;
-
     uint32_t c = (m_meshSize*YAxis)+XAxis; 
             v11 = path[T  ][c];
             v12 = path[T+1][c];
