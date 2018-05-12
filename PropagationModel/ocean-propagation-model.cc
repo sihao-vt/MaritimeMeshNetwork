@@ -35,7 +35,7 @@ OceanPropagationModel::GetTypeId(void)
 				  MakeUintegerChecker<uint64_t> ())			  
 	.AddAttribute("TimeSteps",
 	              "Time step between two simulated ocean surface.",
-				  DoubleValue(0.02),
+				  DoubleValue(0.1),
 				  MakeDoubleAccessor (&OceanPropagationModel::m_timeStep),
 				  MakeDoubleChecker<double> ())
 	.AddAttribute("FileName",
@@ -45,18 +45,18 @@ OceanPropagationModel::GetTypeId(void)
 				  MakeStringChecker())
 	.AddAttribute("WindSpeed",
 	              "The height of simulated ocean follows normal distribution, we need windspeed to calculate the variance of normal distribution",
-				  DoubleValue(15),
+				  DoubleValue(12),
 				  MakeDoubleAccessor(& OceanPropagationModel::SetWindspeed,
 				  &OceanPropagationModel::GetWindspeed),
 				  MakeDoubleChecker<double>())
 	.AddAttribute("Steps",
 	              "How many times slots of simulation.",
-				  UintegerValue(600),
+				  UintegerValue(610),
 				  MakeUintegerAccessor(&OceanPropagationModel::m_steps),
 				  MakeUintegerChecker<uint32_t>())
 	.AddAttribute("Frequency",
 	              "The carrier frequency(in MHz).",
-				  DoubleValue(714),
+				  DoubleValue(600),
 				  MakeDoubleAccessor(& OceanPropagationModel::SetFreq,
 				  &OceanPropagationModel::GetFreq),
 				  MakeDoubleChecker<double>())
@@ -77,6 +77,7 @@ void OceanPropagationModel::InitPath(){
     int16_t nop=5;
 
 	infile.open(m_filename,std::ifstream::in);
+  if(!infile) NS_FATAL_ERROR("No such file!");
 
     for(uint16_t n=0; n<nop; n++) {
         infile >> tmp;
@@ -128,7 +129,7 @@ double OceanPropagationModel::DoCalcRxPower(double txPowerDbm,
 					    Ptr<MobilityModel> b) const
 {
   double distance=a->GetDistanceFrom(b);
-  double antennaHeight=5.0;
+  double antennaHeight=5.5;
 	Ptr<Ocean3dRandomWalk> c=DynamicCast<Ocean3dRandomWalk>(a);
 	Ptr<Ocean3dRandomWalk> d=DynamicCast<Ocean3dRandomWalk>(b);
   double txHeight=c->GetHeight()+antennaHeight;
@@ -147,12 +148,10 @@ double OceanPropagationModel::DoCalcRxPower(double txPowerDbm,
     if((refangle <  0.0) & (xref < 0))              refangle = refangle + M_PI;
   }
 
-  if(distance>14000 || checkBlock(distance,txHeight,rxHeight,Simulator::Now(),a->GetPosition().x,a->GetPosition().y,refangle))
+  if(distance<11000 && checkBlock(distance,txHeight,rxHeight,Simulator::Now(),a->GetPosition().x,a->GetPosition().y,refangle))
   {
-  return -1000; 
+		distance=distance*3 ;
   }
-  else
-  {
 	  /*double d0=1;
     double EIRP_w=std::pow(10,txPowerDbm/10)/1000;
     double E0_Square=30*EIRP_w/(d0*d0);
@@ -170,7 +169,6 @@ double OceanPropagationModel::DoCalcRxPower(double txPowerDbm,
     double lossDb=-10*log10(numerator/denominator);
 		double rssi=txPowerDbm-lossDb;
     return rssi;
-  }
 }
 
 bool OceanPropagationModel::checkBlock(double distance, double txHeight, double rxHeight, Time simulation_time, 
