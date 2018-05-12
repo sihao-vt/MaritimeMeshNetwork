@@ -13,7 +13,7 @@ public:
   static TypeId GetTypeId (void);
   Ocean3dRandomWalk();
   virtual ~Ocean3dRandomWalk (); 
-  double GetPredictedHeight(Time t) const;
+  double GetPredictedHeight(Time t);
   double GetHeight(void);
 private:
   virtual void DoDispose (void);

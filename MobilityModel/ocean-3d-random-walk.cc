@@ -88,7 +88,7 @@ Ocean3dRandomWalk::GetHeight(void)
     m_position.z=result;
 
     NotifyCourseChange();
-
+		
 		return result;
 }
 
@@ -100,6 +100,7 @@ Ocean3dRandomWalk::InitPath(void)
 	uint32_t index=this->GetObject<Node>()->GetId();
 	uint16_t nop=5;
 	infile.open(m_filename, std::ifstream::in);
+	if(!infile) NS_FATAL_ERROR("No such file!");
 	double temp;
 	for(uint16_t i=0;i<nop;i++)
 		infile>>temp;
@@ -121,7 +122,7 @@ Ocean3dRandomWalk::DoGetVelocity(void) const
 { return Vector (0.0,0.0,0.0);}
 
 double
-Ocean3dRandomWalk::GetPredictedHeight(Time t) const
+Ocean3dRandomWalk::GetPredictedHeight(Time t)
 {
 	Time simulation_time=Simulator::Now();
 	double time=simulation_time.GetSeconds();
