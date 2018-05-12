@@ -184,14 +184,6 @@ OceanProtocol::GetTypeId (void)
                                     OLSR_WILL_DEFAULT, "default",
                                     OLSR_WILL_HIGH, "high",
                                     OLSR_WILL_ALWAYS, "always"))
-	.AddAttribute ("Interval", "Height record interval",
-	               DoubleValue(0.1),
-				   MakeDoubleAccessor (& OceanProtocol::m_sampleInterval),
-				   MakeDoubleChecker<double>())
-    .AddAttribute ("PredictDelay", "Predict delay ",
-	               DoubleValue(1),
-				   MakeDoubleAccessor (& OceanProtocol::m_predictInterval),
-				   MakeDoubleChecker<double>())
 
 	.AddTraceSource ("Rx", "Receive OLSR packet.",
                      MakeTraceSourceAccessor (&OceanProtocol::m_rxPacketTrace),
@@ -394,6 +386,9 @@ void OceanProtocol::DoInitialize ()
       canRunOlsr = true;
     }
 
+    m_mobility = this -> GetObject<Node>() ->GetObject<Ocean3dRandomWalk>();
+		Record();
+
   if (canRunOlsr)
     {
       HelloTimerExpire ();
@@ -404,8 +399,6 @@ void OceanProtocol::DoInitialize ()
       NS_LOG_DEBUG ("OLSR on node " << m_mainAddress << " started");
     }
 
-    m_mobility = this -> GetObject<Node>() ->GetObject<Ocean3dRandomWalk>();
-    Simulator::Schedule(Seconds(0.0), &OceanProtocol::Record, this);
 }
 
 void OceanProtocol::SetMainInterface (uint32_t interface)
@@ -1709,6 +1702,7 @@ OceanProtocol::SendHello ()
   msg.SetTimeToLive (1);
   msg.SetHopCount (0);
   msg.SetMessageSequenceNumber (GetMessageSequenceNumber ());
+	Record();
 	msg.SetPredictHeight(m_predictHeight);
   olsr::OceanMessageHeader::Hello &hello = msg.GetHello ();
 
@@ -1817,6 +1811,7 @@ OceanProtocol::SendTc ()
   msg.SetTimeToLive (255);
   msg.SetHopCount (0);
   msg.SetMessageSequenceNumber (GetMessageSequenceNumber ());
+	Record();
 	msg.SetPredictHeight(m_predictHeight);
 
   olsr::OceanMessageHeader::Tc &tc = msg.GetTc ();
@@ -3201,10 +3196,8 @@ OceanProtocol::GetRoutingTableAssociation () const
 void
 OceanProtocol::Record()
 {
-  m_currentHeight = m_mobility ->GetHeight();
+  //m_currentHeight = m_mobility ->GetHeight();
   m_predictHeight = m_mobility->GetPredictedHeight(OLSR_OCEAN_HOLD_TIME);
-	//std::cout<<m_currentHeight<<" "<<m_predictHeight<<std::endl;
-  Simulator::Schedule(Seconds(m_sampleInterval), &OceanProtocol::Record, this);
 }
 
 Time 
@@ -3214,13 +3207,18 @@ OceanProtocol::GetMessageVTime(const OceanMessageHeader& msg)
   {
     return msg.GetVTime();
   }
+	else if(msg.GetMessageType()==olsr::MessageHeader::TC_MESSAGE)
+	{
+		return Seconds(OLSR_OCEAN_HOLD_TIME);
+	}
   else
   {
+		Record();
     double rxHeight=m_predictHeight;
     double txHeight=msg.GetPredictHeight();
-	//if ((5-rxHeight)*(5-rxHeight)+(5-txHeight)*(5-txHeight)>46.24) //1.0
-	//if((4-rxHeight)*(4-rxHeight)+(4-txHeight)*(4-txHeight)>39.00)  //0.9
-	if((4-rxHeight)*(4-rxHeight)+(4-txHeight)*(4-txHeight)>42.50)  //0.7
+	if((4.5-rxHeight)*(4.5-rxHeight)+(4.5-txHeight)*(4.5-txHeight)>44.24) //1.0
+	//if((3.5-rxHeight)*(3.5-rxHeight)+(3.5-txHeight)*(3.5-txHeight)>39.00)  //0.9
+	//if((3.5-rxHeight)*(3.5-rxHeight)+(3.5-txHeight)*(3.5-txHeight)>42.50)  //0.7
 	  return Seconds(0);
 	else
         {

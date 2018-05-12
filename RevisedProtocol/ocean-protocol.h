@@ -212,14 +212,11 @@ private:
 
   //////////////////////////////////////////////////////////////////////////////////
   Ptr<Ocean3dRandomWalk> m_mobility;
-  //std::list<double> m_recordHeight;
   double m_currentHeight;
   double m_predictHeight;
   void Record();
-  //void Predict();
   double m_sampleInterval;
   double m_predictInterval;
-  //double PolyFit(uint8_t degree);
   Time GetMessageVTime(const OceanMessageHeader& msg);
   //////////////////////////////////////////////////////////////////////////////////
 
