@@ -1,7 +1,7 @@
 # Ocean Mesh Network Simulation
 
 ## SetUp
-First, you need to install ns3.
+First, install ns3.
 ```
 cd
 mkdir workspace
