@@ -9,7 +9,7 @@
 #include"ns3/pointer.h"
 #include<cmath>
 #include"ns3/uinteger.h"
-#include"ns3/ocean-3d-random-walk.h"
+#include"ns3/ocean-mobility-model.h"
 
 namespace ns3
 {
@@ -66,8 +66,8 @@ OceanPropagationModel::GetTypeId(void)
 
 OceanPropagationModel::OceanPropagationModel(){}
 
-void OceanPropagationModel::InitPath(){
-    
+void OceanPropagationModel::InitPath()
+{    
 	path.resize(m_steps);
     for(uint16_t i=0;i<m_steps;i++)
 	  path[i].resize(m_meshSize*m_meshSize);
@@ -129,9 +129,9 @@ double OceanPropagationModel::DoCalcRxPower(double txPowerDbm,
 					    Ptr<MobilityModel> b) const
 {
   double distance=a->GetDistanceFrom(b);
-  double antennaHeight=5.5;
-	Ptr<Ocean3dRandomWalk> c=DynamicCast<Ocean3dRandomWalk>(a);
-	Ptr<Ocean3dRandomWalk> d=DynamicCast<Ocean3dRandomWalk>(b);
+  double antennaHeight=5.2;
+  Ptr<OceanMobilityModel> c=DynamicCast<OceanMobilityModel>(a);
+  Ptr<OceanMobilityModel> d=DynamicCast<OceanMobilityModel>(b);
   double txHeight=c->GetHeight()+antennaHeight;
   double rxHeight=d->GetHeight()+antennaHeight;
   double refangle = 0.0;
@@ -148,11 +148,13 @@ double OceanPropagationModel::DoCalcRxPower(double txPowerDbm,
     if((refangle <  0.0) & (xref < 0))              refangle = refangle + M_PI;
   }
 
+  //Make it longer, then the RSSI will be below the noise floor
   if(distance<11000 && checkBlock(distance,txHeight,rxHeight,Simulator::Now(),a->GetPosition().x,a->GetPosition().y,refangle))
   {
 		distance=distance*3 ;
   }
-	  /*double d0=1;
+    //Ocean two-ray propagation model
+	/*double d0=1;
     double EIRP_w=std::pow(10,txPowerDbm/10)/1000;
     double E0_Square=30*EIRP_w/(d0*d0);
     double d1=sqrt((txHeight-rxHeight)*(txHeight-rxHeight)+distance*distance);
@@ -163,11 +165,13 @@ double OceanPropagationModel::DoCalcRxPower(double txPowerDbm,
     double Pr_w=ETOT_Square*m_lambda*m_lambda/480/M_PI/M_PI;
     double Pr_dbm=10*std::log10(Pr_w*1000);
 		
-		return Pr_dbm;*/
-		double numerator = m_lambda * m_lambda;
-		double denominator = 16*M_PI*M_PI*distance*distance;
+	return Pr_dbm;*/
+
+    //Friis propagation model
+	double numerator = m_lambda * m_lambda;
+	double denominator = 16*M_PI*M_PI*distance*distance;
     double lossDb=-10*log10(numerator/denominator);
-		double rssi=txPowerDbm-lossDb;
+	double rssi=txPowerDbm-lossDb;
     return rssi;
 }
 
@@ -225,8 +229,8 @@ bool OceanPropagationModel::checkBlock(double distance, double txHeight, double 
 	P4*(xlength-XAxis*grid_size)*((ylength-YAxis*grid_size)))
         /(grid_size*grid_size);
   
-    if(P_res>h1){ 
-        return true;
+    if(P_res>h1){
+      return true;
     }
   }
         
