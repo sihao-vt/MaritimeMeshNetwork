@@ -386,7 +386,7 @@ void OceanProtocol::DoInitialize ()
       canRunOlsr = true;
     }
 
-    m_mobility = this -> GetObject<Node>() ->GetObject<Ocean3dRandomWalk>();
+    m_mobility = this -> GetObject<Node>() ->GetObject<OceanMobilityModel>();
 		Record();
 
   if (canRunOlsr)
@@ -3207,23 +3207,22 @@ OceanProtocol::GetMessageVTime(const OceanMessageHeader& msg)
   {
     return msg.GetVTime();
   }
-	else if(msg.GetMessageType()==olsr::MessageHeader::TC_MESSAGE)
-	{
-		return Seconds(OLSR_OCEAN_HOLD_TIME);
-	}
+  else if(msg.GetMessageType()==olsr::MessageHeader::TC_MESSAGE)
+  {
+	return Seconds(OLSR_OCEAN_HOLD_TIME);
+  }
   else
   {
-		Record();
+	Record();
     double rxHeight=m_predictHeight;
     double txHeight=msg.GetPredictHeight();
-	if((4.5-rxHeight)*(4.5-rxHeight)+(4.5-txHeight)*(4.5-txHeight)>44.24) //1.0
+
+	//decide the threshold
+	if((4.8-rxHeight)*(4.8-rxHeight)+(4.8-txHeight)*(4.8-txHeight)>49.24) //1.0
 	//if((3.5-rxHeight)*(3.5-rxHeight)+(3.5-txHeight)*(3.5-txHeight)>39.00)  //0.9
-	//if((3.5-rxHeight)*(3.5-rxHeight)+(3.5-txHeight)*(3.5-txHeight)>42.50)  //0.7
 	  return Seconds(0);
 	else
-        {
 	  return Seconds(OLSR_OCEAN_HOLD_TIME);
-        }
   }
 }
 

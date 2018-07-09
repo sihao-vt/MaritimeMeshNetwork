@@ -42,7 +42,7 @@
 #include "ns3/mobility-model.h"
 #include "ns3/node-container.h"
 #include "ns3/double.h"
-#include "ns3/ocean-3d-random-walk.h"
+#include "ns3/ocean-mobility-model.h"
 #include "ns3/olsr-routing-protocol.h"
 
 #include <list>
@@ -211,7 +211,7 @@ private:
   Ptr<Ipv4StaticRouting> m_hnaRoutingTable; //!< Routing table for HNA routes
 
   //////////////////////////////////////////////////////////////////////////////////
-  Ptr<Ocean3dRandomWalk> m_mobility;
+  Ptr<OceanMobilityModel> m_mobility;
   double m_currentHeight;
   double m_predictHeight;
   void Record();
