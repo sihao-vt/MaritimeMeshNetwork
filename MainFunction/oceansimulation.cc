@@ -19,7 +19,7 @@ using namespace ns3;
 NS_LOG_COMPONENT_DEFINE("OceanNetwork");
 
 //Callback function
-//trace tc/rx packet receive
+//trace tx/rx packet receive
 //void Rx(std::string context, const olsr::PacketHeader &header, const olsr::MessageList &messages){std::cout<<"Received"<<std::endl;}
 
 //Callback function
@@ -35,8 +35,8 @@ int main (int argc,char *argv[])
 {
   std::string m_filename = "src/mobility/model/ocean_data_1024_2000_12_0.10_610.txt";
   //std::string m_filename = "src/mobility/model/data.txt";
-	std::string m_heightfile="src/mobility/model/ocean_clean_data_1024_2000_12_0.10_610.txt";
-	//std::string m_heightfile="src/mobility/model/ocean_clean_data_9500_1024_2000_12_0.10_610.txt";
+  std::string m_heightfile="src/mobility/model/ocean_clean_data_1024_2000_12_0.10_610.txt";
+  //std::string m_heightfile="src/mobility/model/ocean_clean_data_9500_1024_2000_12_0.10_610.txt";
   uint16_t m_meshSize;
   uint16_t m_patchSize;
   double m_windSpeed;
@@ -59,9 +59,9 @@ int main (int argc,char *argv[])
   uint32_t m_ySize=4;
   double m_step=9950;
   double m_totalTime=60;
-  double m_packetInterval=0.005;
+  double m_packetInterval=0.01;
   bool m_oceanProtocol=false;
-  //std::string m_animFile("OceanFile.xml");
+  //std::string m_animFile("OceanFile.xml"); //if AniNet is necessary
   bool m_pcap = false;
 
   CommandLine cmd;
@@ -76,24 +76,24 @@ int main (int argc,char *argv[])
   cmd.AddValue("pcap", "Enable PCAP traces on interfaces", m_pcap);
   cmd.Parse(argc,argv);
   
-  std::string phyMode="ErpOfdmRate12Mbps"; // if we use 802.11g
+  std::string phyMode="ErpOfdmRate12Mbps";
   Config::SetDefault("ns3::WifiRemoteStationManager::NonUnicastMode", StringValue(phyMode)); 
 	
   NodeContainer nodes;
   nodes.Create(m_xSize*m_ySize);
 
-	WifiHelper wifi;
-  wifi.SetStandard(WIFI_PHY_STANDARD_80211g); //802.11g
+  WifiHelper wifi;
+  wifi.SetStandard(WIFI_PHY_STANDARD_80211g);
 
   YansWifiChannelHelper channel;
   channel.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
   channel.AddPropagationLoss ("ns3::OceanPropagationModel",
-			                        "PatchSize",UintegerValue(m_patchSize),
-			                        "WindSpeed",DoubleValue(m_windSpeed),
-	                            "MeshSize", UintegerValue(m_meshSize),
-			                        "TimeSteps",DoubleValue(m_timeStep),
-			                        "Steps", UintegerValue(m_steps),
-			                        "FileName", StringValue(m_filename),
+			                  "PatchSize",UintegerValue(m_patchSize),
+			                  "WindSpeed",DoubleValue(m_windSpeed),
+	                          "MeshSize", UintegerValue(m_meshSize),
+			                  "TimeSteps",DoubleValue(m_timeStep),
+			                  "Steps", UintegerValue(m_steps),
+			                  "FileName", StringValue(m_filename),
                               "Frequency",DoubleValue(m_centerFreq));
 	//channel.AddPropagationLoss("ns3::FriisPropagationLossModel", "Frequency", DoubleValue(m_centerFreq*1000000.0));
 
@@ -103,31 +103,31 @@ int main (int argc,char *argv[])
   phy.Set("RxGain",DoubleValue(3));
   phy.SetChannel(channel.Create());
   
-	WifiMacHelper mac;
-	wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager",
-			                         "DataMode", StringValue(phyMode),
-															 "ControlMode", StringValue(phyMode));
+  WifiMacHelper mac; 
+  wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager",
+			                   "DataMode", StringValue(phyMode),
+							   "ControlMode", StringValue(phyMode));
 
   mac.SetType("ns3::AdhocWifiMac");
 
-	NetDeviceContainer devices=wifi.Install(phy, mac, nodes);
+  NetDeviceContainer devices=wifi.Install(phy, mac, nodes);
   
   MobilityHelper mobility;
   mobility.SetPositionAllocator("ns3::GridPositionAllocator",
                                 "MinX",DoubleValue(50.0),
-                        				"MinY",DoubleValue(50.0),
-				                        "DeltaX",DoubleValue(m_step),
-				                        "DeltaY",DoubleValue(m_step),
-				                        "GridWidth",UintegerValue(m_xSize),
-				                        "LayoutType",StringValue("RowFirst"));
+                        		"MinY",DoubleValue(50.0),
+				                "DeltaX",DoubleValue(m_step),
+				                "DeltaY",DoubleValue(m_step),
+				                "GridWidth",UintegerValue(m_xSize),
+				                "LayoutType",StringValue("RowFirst"));
  
-  mobility.SetMobilityModel("ns3::Ocean3dRandomWalk",
-			                      "FileName",StringValue(m_heightfile),
-			                      "MeshSize",UintegerValue(m_meshSize),
-			                      "PatchSize",UintegerValue(m_patchSize),
-			                      "TimeSteps",DoubleValue(m_timeStep),
-		                        "Steps",UintegerValue(m_steps));
-	//mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
+  mobility.SetMobilityModel("ns3::OceanMobilityModel",
+			                "FileName",StringValue(m_heightfile),
+			                "MeshSize",UintegerValue(m_meshSize),
+			                "PatchSize",UintegerValue(m_patchSize),
+			                "TimeSteps",DoubleValue(m_timeStep),
+		                    "Steps",UintegerValue(m_steps));
+  //mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
 
   mobility.Install(nodes);
 
@@ -163,47 +163,33 @@ int main (int argc,char *argv[])
   address.SetBase("10.1.1.0","255.255.255.0");
   Ipv4InterfaceContainer interfaces = address.Assign(devices);
   
-	//onoff application
-	/*Ipv4Address remoteaddress=interfaces.GetAddress(m_xSize*m_ySize-1);
-	OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress(remoteaddress, 9));
-	onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1.0]"));
-	onoff.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0.0]"));
-	onoff.SetAttribute("PacketSize", UintegerValue(m_packetSize));
-	onoff.SetAttribute("DataRate", DataRateValue(m_packetSize*8/m_packetInterval));
-	ApplicationContainer app1=onoff.Install(nodes.Get(0));
-	app1.Start (Seconds(0.0));
-	app1.Stop  (Seconds(m_totalTime));
-
-	PacketSinkHelper sink ("ns3::UdpSocketFactory", InetSocketAddress(remoteaddress, 9));
-	ApplicationContainer app2=sink.Install(nodes.Get(m_xSize*m_ySize-1));
-	app2.Start (Seconds(0.0));
-	app2.Stop  (Seconds(m_totalTime));*/
-
-	//udp client application
+  //udp client application
   uint16_t port=4000;
-	UdpServerHelper server(port);
-	ApplicationContainer apps=server.Install(nodes.Get(m_xSize*m_ySize-1));
-	apps.Start(Seconds(15.0));
-	apps.Stop (Seconds(m_totalTime));
+  UdpServerHelper server(port);
+  ApplicationContainer apps=server.Install(nodes.Get(m_xSize*m_ySize-1));
+  apps.Start(Seconds(15.0));
+  apps.Stop (Seconds(m_totalTime));
 
-	Address serverAddress=Address(interfaces.GetAddress(m_xSize*m_ySize-1));
-	UdpClientHelper client(serverAddress, port);
-	client.SetAttribute("PacketSize", UintegerValue(m_packetSize));
-	client.SetAttribute("MaxPackets", UintegerValue((uint32_t)(m_totalTime*(1/m_packetInterval))));
-	client.SetAttribute("Interval", TimeValue(Seconds(m_packetInterval)));
-	ApplicationContainer clientApps=client.Install(nodes.Get(0));
-	clientApps.Start(Seconds(15.0));
-	clientApps.Stop (Seconds(m_totalTime));
+  Address serverAddress=Address(interfaces.GetAddress(m_xSize*m_ySize-1));
+  UdpClientHelper client(serverAddress, port);
+  client.SetAttribute("PacketSize", UintegerValue(m_packetSize));
+  client.SetAttribute("MaxPackets", UintegerValue((uint32_t)(m_totalTime*(1/m_packetInterval))));
+  client.SetAttribute("Interval", TimeValue(Seconds(m_packetInterval)));
+  ApplicationContainer clientApps=client.Install(nodes.Get(0));
+  clientApps.Start(Seconds(15.0));
+  clientApps.Stop (Seconds(m_totalTime));
 
   Simulator::Stop(Seconds(m_totalTime));
+
   //AnimationInterface anim(m_animFile); // if AnimNet is necessary
-	//Callback trace
+  
+  //Callback trace (cooperate with callback function)
   //std::string sender="/NodeList/*/$ns3::olsr::RoutingProtocol/Rx";
   //Config::Connect(sender,MakeCallback(&Rx));  
   //std::string tablechange="/NodeList/*/$ns3::olsr::RoutingProtocol/RoutingTableChanged";
-	//Config::Connect(tablechange, MakeCallback(&TableChange));
-	//td::string rx="NodeList/0/DeviceList/*/$ns3::WifiNetDevice/Phy/$ns3::YansWifiPhy/PhyTxBegin";
-	//Config::Connect(rx, MakeCallback(&UdpRx));
+  //Config::Connect(tablechange, MakeCallback(&TableChange)); 
+  //std::string rx="NodeList/0/DeviceList/*/$ns3::WifiNetDevice/Phy/$ns3::YansWifiPhy/PhyTxBegin";
+  //Config::Connect(rx, MakeCallback(&UdpRx));
 
   Simulator::Run();
   Simulator::Destroy();
