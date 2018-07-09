@@ -14,9 +14,11 @@ The predicted node elevation information should be included in hello message.
 After received a hello message from its neighborhood, 
 the receiver will calculate the link stability according to the sea states and predicted elevation information 
 of both transmitter and receiver. 
+
 we need to choose appropriate link stability as the threshold in different sea states. 
 In link-state-aware routing protocol, if link stability between two nodes is above this threshold,
 we assume the communication link is available and it is a potential routing path; 
 otherwise, we assume this link is unstable and we will not choose it when calculating routing table.
+
 Routing messages should be exchanged more frequently due to dynamic ocean wave. 
 The information holding time should also be shortened.
